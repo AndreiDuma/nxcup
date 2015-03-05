@@ -3,12 +3,12 @@
 
 GCC_BIN =
 PROJECT = FRDM-TFC
-OBJECTS = ./TFC.o 
-SYS_OBJECTS = ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/retarget.o ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/board.o ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/cmsis_nvic.o ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/mbed_overrides.o ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/system_MKL25Z4.o ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/startup_MKL25Z4.o 
-INCLUDE_PATHS = -I. -I./mbed -I./mbed/TARGET_KL25Z -I./mbed/TARGET_KL25Z/TARGET_Freescale -I./mbed/TARGET_KL25Z/TARGET_Freescale/TARGET_KLXX -I./mbed/TARGET_KL25Z/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z -I./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM 
-LIBRARY_PATHS = -L./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM 
-LIBRARIES = -lmbed 
-LINKER_SCRIPT = ./mbed/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/MKL25Z4.ld
+OBJECTS = ./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/startup_MKL25Z4.o ./mbed-src/common/semihost_api.o ./mbed-src/common/gpio.o ./mbed-src/common/assert.o ./mbed-src/common/error.o ./mbed-src/common/wait_api.o ./mbed-src/common/rtc_time.o ./mbed-src/common/us_ticker_api.o ./mbed-src/common/mbed_interface.o ./mbed-src/common/exit.o ./mbed-src/common/pinmap_common.o ./mbed-src/common/board.o ./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/cmsis_nvic.o ./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/system_MKL25Z4.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/i2c_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/analogin_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/sleep.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/pwmout_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/port_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/gpio_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/analogout_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/us_ticker.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/rtc_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/pinmap.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/mbed_overrides.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/gpio_irq_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/serial_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/spi_api.o ./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/PeripheralPins.o ./SpeedSensor.o ./main.o ./TFC.o ./mbed-src/common/Timeout.o ./mbed-src/common/InterruptIn.o ./mbed-src/common/Ticker.o ./mbed-src/common/BusOut.o ./mbed-src/common/CAN.o ./mbed-src/common/FileLike.o ./mbed-src/common/I2CSlave.o ./mbed-src/common/InterruptManager.o ./mbed-src/common/FileSystemLike.o ./mbed-src/common/SPI.o ./mbed-src/common/FunctionPointer.o ./mbed-src/common/LocalFileSystem.o ./mbed-src/common/Stream.o ./mbed-src/common/TimerEvent.o ./mbed-src/common/Timer.o ./mbed-src/common/SPISlave.o ./mbed-src/common/BusInOut.o ./mbed-src/common/FilePath.o ./mbed-src/common/SerialBase.o ./mbed-src/common/FileBase.o ./mbed-src/common/Ethernet.o ./mbed-src/common/I2C.o ./mbed-src/common/CallChain.o ./mbed-src/common/Serial.o ./mbed-src/common/RawSerial.o ./mbed-src/common/retarget.o ./mbed-src/common/BusIn.o 
+SYS_OBJECTS = 
+INCLUDE_PATHS = -I. -I./mbed-src -I./mbed-src/common -I./mbed-src/hal -I./mbed-src/api -I./mbed-src/targets -I./mbed-src/targets/cmsis -I./mbed-src/targets/cmsis/TARGET_Freescale -I./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX -I./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z -I./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/TOOLCHAIN_GCC_ARM -I./mbed-src/targets/hal -I./mbed-src/targets/hal/TARGET_Freescale -I./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX -I./mbed-src/targets/hal/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z 
+LIBRARY_PATHS = 
+LIBRARIES = 
+LINKER_SCRIPT = ./mbed-src/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/MKL25Z4.ld
 
 ###############################################################################
 AS      = $(GCC_BIN)arm-none-eabi-as
@@ -22,9 +22,9 @@ SIZE 	= $(GCC_BIN)arm-none-eabi-size
 CPU = -mcpu=cortex-m0plus -mthumb
 CC_FLAGS = $(CPU) -c -g -fno-common -fmessage-length=0 -Wall -fno-exceptions -ffunction-sections -fdata-sections -fomit-frame-pointer
 CC_FLAGS += -MMD -MP
-CC_SYMBOLS = -DTARGET_KL25Z -DTARGET_M0P -DTARGET_CORTEX_M -DTARGET_Freescale -DTARGET_KLXX -DTOOLCHAIN_GCC_ARM -DTOOLCHAIN_GCC -D__CORTEX_M0PLUS -DARM_MATH_CM0PLUS -DMBED_BUILD_TIMESTAMP=1419093469.29 -D__MBED__=1 -DTARGET_FF_ARDUINO 
+CC_SYMBOLS = -DTARGET_KL25Z -DTARGET_M0P -DTARGET_CORTEX_M -DTARGET_Freescale -DTARGET_KLXX -DTOOLCHAIN_GCC_ARM -DTOOLCHAIN_GCC -D__CORTEX_M0PLUS -DARM_MATH_CM0PLUS -DMBED_BUILD_TIMESTAMP=1425402567.48 -D__MBED__=1 -DTARGET_FF_ARDUINO 
 
-LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float
+LD_FLAGS = $(CPU) -Wl,--gc-sections --specs=nano.specs -u _printf_float -u _scanf_float -Wl,--wrap,main
 LD_FLAGS += -Wl,-Map=$(PROJECT).map,--cref
 LD_SYS_LIBS = -lstdc++ -lsupc++ -lm -lc -lgcc -lnosys
 
