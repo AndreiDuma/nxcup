@@ -1,0 +1,7 @@
+*.d
+*.o
+*.bin
+*.elf
+mbed-src/.hg/
+*.hex
+*.map
