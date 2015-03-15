@@ -27,12 +27,10 @@ volatile float integ_value;
 
 static inline void set_camera_integ_time_ms()
 {
-	if (light.light_value >= 15)
-		camera.set_integration_time(9.0);
-	else if (light.light_value >= 6)
-		camera.set_integration_time(13.5);
+	if (light.light_value >= 6)
+		camera.set_integration_time(12.0);
 	else
-		camera.set_integration_time(integ_value); // 15.5
+		camera.set_integration_time(13.5);
 }
 
 char bt_data[130];
@@ -111,8 +109,8 @@ int main()
 	TFC_InitLineScanCamera();
 	TFC_InitServos(SERVO_MIN_PULSE_WIDTH_DEFAULT , SERVO_MAX_PULSE_WIDTH_DEFAULT, SERVO_DEFAULT_PERIOD);
 	TFC_InitMotorPWM(FTM0_DEFAULT_SWITCHING_FREQUENCY);
-	//TFC_HBRIDGE_ENABLE;
-	TFC_SetMotorPWM(0.0,0.0);
+	TFC_HBRIDGE_ENABLE;
+	TFC_SetMotorPWM(0.5,0.5);
 	TFC_SetServo(0.0, 0.0);
 	TFC_BAT_LED1_ON;
 	bluetooth.baud(115200);
@@ -145,18 +143,16 @@ int main()
 		*/
 
 
-		/*
 		left_line = camera.get_left_line();
 		right_line = camera.get_right_line();
 
 		if (left_line != NO_LINE_DETECTED) {
-			TFC_SetServo(0.0, -0.5);
+			TFC_SetServo(0.0, (left_line / 64.0));
 		} else if (right_line != NO_LINE_DETECTED) {
-			TFC_SetServo(0.0, 0.5);
+			TFC_SetServo(0.0, -(128.0 - right_line) / 64.0);
 		} else {
 			TFC_SetServo(0.0, 0.0);
 		}
-		*/
 
 	}
 }

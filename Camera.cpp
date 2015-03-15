@@ -64,7 +64,6 @@ void Camera::set_left_line()
 {
 	int i;
 
-	/*
 	for (i = 64; i >= 14; i--)
 		if (pixels[i] == 0) {
 			left_line_pos = i;
@@ -72,18 +71,19 @@ void Camera::set_left_line()
 		}
 
 	left_line_pos = NO_LINE_DETECTED;
-	*/
+	/*
 	sum_left = 0;
 	for (i = 64; i >= 0; i--)
 		sum_left+=pixels[i];
+	*/
 
 }
 
 void Camera::set_right_line()
 {
 	int i;
-	/*
-	for (i = 65; i < 114; i++)
+
+	for (i = 65; i < 113; i++)
 		if (pixels[i] == 0) {
 			while (pixels[i] == 0 && i < 114)
 				i++;
@@ -91,10 +91,11 @@ void Camera::set_right_line()
 			return;
 		}
 	right_line_pos = NO_LINE_DETECTED;
-	*/
+	/*
 	sum_right = 0;
 	for (i = 65; i < 128; i++)
 		sum_right+=pixels[i];
+	 */
 }
 
 void Camera::iterate()
