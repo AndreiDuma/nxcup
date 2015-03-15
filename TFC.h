@@ -142,8 +142,8 @@ I/O:\n
 #define TAOS_CLK_COUNT                                                                   200   // Number of cycles for CLK Signal on camera
 
 // use these to dial in servo steering to your particular servo
-#define SERVO_MIN_PULSE_WIDTH_DEFAULT                                          (float)(.0006)  // The number here should be be *pulse width* in seconds to move servo to its left limit
-#define SERVO_MAX_PULSE_WIDTH_DEFAULT                                          (float)(.00135)   // The number here should be be *pulse width* in seconds to move servo to its left limit 
+#define SERVO_MIN_PULSE_WIDTH_DEFAULT                                          (float)(.00060)  // The number here should be be *pulse width* in seconds to move servo to its left limit
+#define SERVO_MAX_PULSE_WIDTH_DEFAULT                                          (float)(.00124)   // The number here should be be *pulse width* in seconds to move servo to its left limit
 
 
 #define FTM0_CLOCK                                             (SystemCoreClock/2)

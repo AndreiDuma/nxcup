@@ -175,8 +175,10 @@ void TFC_GPIO_Init()
 	PORTE->PCR[20] = PORT_PCR_MUX(1);
 
 	//Port for Pushbuttons
+	/*
 	PORTC->PCR[13] = PORT_PCR_MUX(1);
 	PORTC->PCR[17] = PORT_PCR_MUX(1);
+	*/
 
 
 	//Ports for DIP Switches

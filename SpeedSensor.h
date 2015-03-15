@@ -9,12 +9,14 @@ private:
 	InterruptIn hall_sensor_int;
 	Timer speed_timer;
 	Timeout watchdog;
-	bool valid_read_speed;
-	bool disable_int_when_stopped; /* WARNING: Might disable a lot more interrupt lines */
+	volatile bool valid_read_speed;
 	void sensor_irq();
 	void watchdog_irq();
+	int weight_adjust;
+	void (*handler)(void);
+	void set_speed(int new_speed);
 public:
-	SpeedSensor(PinName pin);
+	SpeedSensor(PinName pin, int weight_adjust, void (*handler)(void));
 	void stop(); /* WARNING: Might disable a lot more interrupt lines */
 	void start();
 	volatile int speed;
