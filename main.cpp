@@ -11,26 +11,38 @@
 
 // activate histerizis
 // trecut BT pe buffered serial
-void car_logic();
+void camera_handle_irq();
 
-static inline void set_camera_integ_time_ms() __attribute__((always_inline));
+static inline void light_sensor_handle_irq() __attribute__((always_inline));
 
 Serial bluetooth(MBED_UART1);
 SpeedSensor left(PTA1, 0, NULL);
 SpeedSensor right(PTA2, 21, NULL);
-Camera camera(car_logic);
-LightSensor light(PTA16, &set_camera_integ_time_ms);
+Camera camera(camera_handle_irq);
+LightSensor light(PTA16, &light_sensor_handle_irq);
 InterruptIn btn13(PTA13);
 Timer bluetooth_clk;
+Timer pid_clk;
+
+#include "car_logic.h"
 
 volatile float integ_value;
 
-static inline void set_camera_integ_time_ms()
+/*
+ * tell camera integration time based on read level of light
+ * status: light sensor - camera calibration
+ */
+static inline void light_sensor_handle_irq()
 {
-	if (light.light_value >= 6)
-		camera.set_integration_time(12.0);
+	/*
+	if (light.light_value > 22)
+		camera.set_integration_time(0.3);
+	else if (light.light_value > 20)
+		camera.set_integration_time(1.0);
 	else
-		camera.set_integration_time(13.5);
+		camera.set_integration_time(5.0);
+	*/
+	camera.set_integration_time(integ_value);
 }
 
 char bt_data[130];
@@ -38,7 +50,8 @@ float speed = 1.0;
 
 volatile bool debouncer_btn_pressed = false;
 
-void init_light_sensor()
+/* unused */
+void red_btn_irq()
 {
 	if (!debouncer_btn_pressed) {
 		debouncer_btn_pressed = true;
@@ -47,6 +60,7 @@ void init_light_sensor()
 	}
 }
 
+/* check ACKs for BT cmd */
 bool check_bt_state(char *str)
 {
 	int i;
@@ -61,7 +75,8 @@ bool check_bt_state(char *str)
 void TFC_InitADC_System();
 void TFC_InitLineScanCamera();
 
-void car_logic()
+/* copy data from camera after it has been read */
+void camera_handle_irq()
 {
 	int i;
 
@@ -86,7 +101,7 @@ static inline void send_data_to_bt()
 	}
 }
 
-void change_th()
+void bt_recv_irq()
 {
 	float th;
 
@@ -98,14 +113,7 @@ void change_th()
 // 3014
 int main()
 {
-	int left_line, right_line;
-	/*
-	 * UART2 on PTD2 and PDT3 (J10 zone) might be available for bluetooth
-	 * set to altenative 3
-	 * TODO: signal detection might not work well
-	 */
 	TFC_GPIO_Init();
-	//TFC_InitADC_System();
 	TFC_InitLineScanCamera();
 	TFC_InitServos(SERVO_MIN_PULSE_WIDTH_DEFAULT , SERVO_MAX_PULSE_WIDTH_DEFAULT, SERVO_DEFAULT_PERIOD);
 	TFC_InitMotorPWM(FTM0_DEFAULT_SWITCHING_FREQUENCY);
@@ -114,45 +122,16 @@ int main()
 	TFC_SetServo(0.0, 0.0);
 	TFC_BAT_LED1_ON;
 	bluetooth.baud(115200);
-	bluetooth.attach(&change_th);
+	bluetooth.attach(&bt_recv_irq);
 
 	camera.init_camera_read();
 	bluetooth_clk.start();
-	btn13.rise(&init_light_sensor);
+	pid_clk.start();
+	//btn13.rise(&init_light_sensor);
+
 	for (;;) {
 		camera.iterate();
-		/*
-		int i;
-		bluetooth.puts("\nNew data:\n");
-		for (i = 0; i < 20; i++) {
-			//speed = i * 0.05;
-			//TFC_SetMotorPWM(0.0, speed); 
-			wait_ms(1000);
-			bluetooth.printf("blabla\n");
-			bluetooth.printf("\t%f%%\t%d\t%d\n", speed * 100, left.speed, right.speed);
-		}
-		*/
 		send_data_to_bt();
-		/*
-		if (camera.sum_left - 5 > camera.sum_right)
-			TFC_SetServo(0.0, -0.5);
-		else if (camera.sum_left + 5 > camera.sum_right)
-			TFC_SetServo(0.0, 0.5);
-		else
-			TFC_SetServo(0.0, 0.0);
-		*/
-
-
-		left_line = camera.get_left_line();
-		right_line = camera.get_right_line();
-
-		if (left_line != NO_LINE_DETECTED) {
-			TFC_SetServo(0.0, (left_line / 64.0));
-		} else if (right_line != NO_LINE_DETECTED) {
-			TFC_SetServo(0.0, -(128.0 - right_line) / 64.0);
-		} else {
-			TFC_SetServo(0.0, 0.0);
-		}
-
+		take_a_decission();
 	}
 }

@@ -8,6 +8,8 @@ LightSensor::LightSensor(PinName pin, void (*handler)(void)) : clock_int(pin)
 	this->valid_clock_value = false;
 	this->clock_timer.start();
 	this->count = 0;
+	this->clock_int.rise(this, &LightSensor::light_sensor_irq);
+	this->mean_aprox_timer.attach(this, &LightSensor::approximate, 0.0002);
 	/* seara neoane + led-uri: 0-4 fara leduri; 5-7 cu leduri  */
 	/* lumina mai multa => valori mai mari */
 }

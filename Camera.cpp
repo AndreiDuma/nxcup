@@ -20,7 +20,7 @@ Camera::Camera(void (*handler)(void)) : comparator(PTC7, NC)
 	this->right_line_pos = NO_LINE_DETECTED;
 	this->comparator.treshold(1.0);
 	this->comparator.hysteresis(3);
-	this->pixels_integration_time_ms = 13;
+	this->pixels_integration_time_ms = 10;
 }
 
 static inline void camera_half_clock_delay()
@@ -64,9 +64,9 @@ void Camera::set_left_line()
 {
 	int i;
 
-	for (i = 64; i >= 14; i--)
+	for (i = 64; i >= 10; i--)
 		if (pixels[i] == 0) {
-			left_line_pos = i;
+			left_line_pos = i - 10;;
 			return;
 		}
 
@@ -83,9 +83,9 @@ void Camera::set_right_line()
 {
 	int i;
 
-	for (i = 65; i < 113; i++)
+	for (i = 65; i < 118; i++)
 		if (pixels[i] == 0) {
-			while (pixels[i] == 0 && i < 114)
+			while (pixels[i] == 0 && i < 118)
 				i++;
 			right_line_pos = i;
 			return;
