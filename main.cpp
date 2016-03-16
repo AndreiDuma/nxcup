@@ -1,12 +1,24 @@
 #include "mbed.h"
 #include "TFC.h"
 #include <time.h>
+#include <math.h>
 
 #define	KP		0.03	/* 0.03 din vechiul cod */
 #define	KD		0
-#define	MIN_LIMIT	7	/* 7 din vechiul cod */
-#define	MAX_LIMIT	120	/* 120 din vechiul cod */
+//#define	MIN_LIMIT	7	/* 7 din vechiul cod */
+//#define	MAX_LIMIT	120	/* 120 din vechiul cod */
+#define	MIN_LIMIT	0
+#define	MAX_LIMIT	127
 
+#define PRAG_MEDIE_ARITMETICA
+#define SERVO_FACTOR	3.0
+
+#define ENGINES_ON
+//#define	ENGINES_POWER_A		0.7
+#define	ENGINES_POWER_A		0.7
+//#define	ENGINES_POWER_B		-2.0
+//#define	ENGINES_POWER_B		-2.2
+#define	ENGINES_POWER_B		-3.5
 
 float TIMP_EXPUNERE = 0.5;
 double pixels[3][128];
@@ -14,6 +26,7 @@ double average_pixels[128];
 
 /* 0 sau 1 in functie de pragul calculat anterior */
 int fixed_pixels[128];
+int old_pixels[128];
 
 /* old_pos, new_pos
    ultimul pixel cel mai apropiat de centru de pe partea pe care se afla 
@@ -36,8 +49,8 @@ int direction;
 /* cate valori corespunzatoare lui negru avem la un moment dat */
 int sum = 0;
 
-double MOTOR_POWER = -0.42;
-
+#define MOTOR_POWER = 0.0;
+#define MOTOR_POWER = -0.2;
 
 Serial bluetooth(MBED_UART1);
 AnalogIn camera(PTD5); // sau PTD6 (nu stiu exact care)
@@ -71,6 +84,8 @@ double camera_get_raw_data(int index) {
 	double high = -100.0;
 	double low  =  100.0;
 
+	double sum = 0.0;
+
 	TAOS_CLK_LOW;
 	TAOS_SI_HIGH;
 	camera_hclk();
@@ -86,16 +101,25 @@ double camera_get_raw_data(int index) {
 		camera_value = camera.read();
 		pixels[index][i] = camera_value;
 		if ( (i >= MIN_LIMIT) && (i <= MAX_LIMIT) ) {
-			if (camera_value > high) 
+			if (camera_value > high) {
 				high = camera_value;
-			else if (camera_value < low)
+			}
+			if (camera_value < low) {
 				low = camera_value;
+			}
+			sum += camera_value;
 		}
 		TAOS_CLK_HIGH;
 		camera_clk();
 		TAOS_CLK_LOW;
 	}
+
+#ifdef PRAG_MEDIE_ARITMETICA
+	prag = sum / (MAX_LIMIT - MIN_LIMIT + 1);
+#else
 	prag = (high - low) / 2;
+#endif
+
 	return prag;
 }
 
@@ -131,8 +155,7 @@ void camera_get_3_raw_data() {
 }
 
 
-void camera_fix_pixels()
-{
+void camera_fix_pixels() {
 	int i;
 	for (i = MIN_LIMIT; i <= MAX_LIMIT; i++) {
 		/* Daca este sub prag inseamna ca este negru, altfel este alb */
@@ -146,8 +169,7 @@ void camera_fix_pixels()
 }
 
 
-void processing_data() 
-{
+void processing_data() {
 	camera_detect_line();
 	double servo_dir = KP * new_pos + KD * (new_pos - old_pos);
 
@@ -259,6 +281,97 @@ void camera_detect_line() {
 }
 
 
+void action() {
+	int max = 0,
+	    max_start = -1,
+	    max_end = -1;
+	int start = MIN_LIMIT;
+	bool already = false;
+
+	fixed_pixels[MAX_LIMIT] = 1;
+	for (int i = MIN_LIMIT; i <= MAX_LIMIT; i++) {
+		if (fixed_pixels[i] == 1) {
+			// suntem pe 1.
+			if (already) {
+				int end = i;
+				if (end - start > max) {
+					max = end - start;
+					max_start = start;
+					max_end = end;
+				}
+				already = false;
+			}
+		} else {
+			// suntem pe 0.
+			if (!already) {
+				// doar la primul 0.
+
+				already = true;
+				start = i;
+			}
+		}
+	}
+
+	int middle = (max_end + max_start) / 2;
+	//double servo_dir_ = (middle - 64) / 64.0;
+
+	//int servo_dir_sgn = (servo_dir_ > 0) - (servo_dir_ < 0);
+	//double servo_dir = servo_dir_ * 2.8;
+
+#define PAST_VALUES	5
+
+#define K_		3.0
+
+#define	KP_		0.7
+#define KD_		0.3
+#define KI_		0.0
+
+	static double x_old;  // pentru D
+	static double xs[PAST_VALUES];  // pentru I
+	static int index = 0;
+	
+	double x = (middle - 64) / 64.0;
+
+	double integral = 0.0;
+	/*
+	for (int i = 0; i < PAST_VALUES; i++) {
+		integral += xs[i];
+	}
+	xs[index] = x;
+	index = (index + 1) % PAST_VALUES;
+	*/
+
+	double y = (x * KP_ + (x - x_old) * KD_ + integral / PAST_VALUES * KI_) * K_;
+
+	x_old = x;
+
+	static int frame = 0;
+	//bluetooth.printf("[ %d ] max_start = %d, max_end = %d, middle = %d, x = %lf, int = %lf, servo = %lf\n", frame++, max_start, max_end, middle, x, integral, y);
+
+	TFC_SetServo(0, y);
+}
+
+
+void adjust_power() {
+	int sum = 0;
+
+	for (int i = 0; i < 128; i++) {
+		int d = fixed_pixels[i] - old_pixels[i];
+
+		sum += d * d;
+
+		old_pixels[i] = fixed_pixels[i];
+	}
+
+	double error = sqrt(sum / 128.0);
+
+	bluetooth.printf("error: %lf\n", error);
+
+	double power = ENGINES_POWER_A + error * ENGINES_POWER_B;
+	TFC_SetMotorPWM(-power, -power);
+}
+
+
 int main() {
 	clock_t t_start, t_stop;
 	int i;
@@ -273,6 +386,7 @@ int main() {
 
 	TFC_HBRIDGE_ENABLE;    /* enable motors */	
 	TFC_SetServo(0, 0.0);  /* set servo */
+	TFC_SetMotorPWM(0.0, 0.0);
 
 	/* light up the four green leds */
 	TFC_BAT_LED0_ON;
@@ -291,23 +405,38 @@ int main() {
 		camera_fix_pixels(); 	
 
 		/* process data; PID algorithm */
-		processing_data();		
+		//processing_data();		
+
+#ifdef ENGINES_ON
+		adjust_power();
+#endif
+		
+		action();
 
 		t_stop = clock();  /* marcam momentul de sfarsit */
 		seconds = ((float)(t_stop - t_start)) / CLOCKS_PER_SEC;
 
 		/* Debug - bluetooth */
 		if (seconds >= 1) { 
-			for (i = MIN_LIMIT; i <= MAX_LIMIT; i++)
+			for (i = 0; i < 128; i++) {
 				bluetooth.printf("%d", fixed_pixels[i]);
+			}
 			bluetooth.printf("\n");
-			bluetooth.printf("......%d\n", direction);
+
+			/*
+			for (i = MIN_LIMIT; i <= MAX_LIMIT; i++) {
+				bluetooth.printf("%.2f ", average_pixels[i]);
+			}
+			bluetooth.printf("\n");
+			*/
+
+			//bluetooth.printf("direction......%d\n", direction);
 			t_start = clock();
 		}
 
-		wait_ms(TIMP_EXPUNERE);
+		//wait_ms(TIMP_EXPUNERE);
 
 		/* set power to the motor */
-		TFC_SetMotorPWM(MOTOR_POWER, MOTOR_POWER);
+		//TFC_SetMotorPWM(MOTOR_POWER, MOTOR_POWER);
 	}
 }
