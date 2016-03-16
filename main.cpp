@@ -15,9 +15,7 @@
 
 #define ENGINES_ON
 //#define	ENGINES_POWER_A		0.7
-#define	ENGINES_POWER_A		0.7
-//#define	ENGINES_POWER_B		-2.0
-//#define	ENGINES_POWER_B		-2.2
+#define	ENGINES_POWER_A		0.8
 #define	ENGINES_POWER_B		-3.5
 
 float TIMP_EXPUNERE = 0.5;
@@ -49,9 +47,6 @@ int direction;
 /* cate valori corespunzatoare lui negru avem la un moment dat */
 int sum = 0;
 
-#define MOTOR_POWER = 0.0;
-#define MOTOR_POWER = -0.2;
-
 Serial bluetooth(MBED_UART1);
 AnalogIn camera(PTD5); // sau PTD6 (nu stiu exact care)
 
@@ -81,10 +76,12 @@ double camera_get_raw_data(int index) {
 	int i;
 	double camera_value, prag;
 
+#ifdef PRAG_MEDIE_ARITMETICA
+	double sum = 0.0;
+#else
 	double high = -100.0;
 	double low  =  100.0;
-
-	double sum = 0.0;
+#endif
 
 	TAOS_CLK_LOW;
 	TAOS_SI_HIGH;
@@ -101,13 +98,16 @@ double camera_get_raw_data(int index) {
 		camera_value = camera.read();
 		pixels[index][i] = camera_value;
 		if ( (i >= MIN_LIMIT) && (i <= MAX_LIMIT) ) {
+#ifdef PRAG_MEDIE_ARITMETICA
+			sum += camera_value;
+#else
 			if (camera_value > high) {
 				high = camera_value;
 			}
 			if (camera_value < low) {
 				low = camera_value;
 			}
-			sum += camera_value;
+#endif
 		}
 		TAOS_CLK_HIGH;
 		camera_clk();
@@ -169,6 +169,7 @@ void camera_fix_pixels() {
 }
 
 
+#if 0
 void processing_data() {
 	camera_detect_line();
 	double servo_dir = KP * new_pos + KD * (new_pos - old_pos);
@@ -279,6 +280,7 @@ void camera_detect_line() {
 		}
 	}
 }
+#endif
 
 
 void action() {
@@ -313,10 +315,6 @@ void action() {
 	}
 
 	int middle = (max_end + max_start) / 2;
-	//double servo_dir_ = (middle - 64) / 64.0;
-
-	//int servo_dir_sgn = (servo_dir_ > 0) - (servo_dir_ < 0);
-	//double servo_dir = servo_dir_ * 2.8;
 
 #define PAST_VALUES	5
 
@@ -327,26 +325,30 @@ void action() {
 #define KI_		0.0
 
 	static double x_old;  // pentru D
+#if 0
 	static double xs[PAST_VALUES];  // pentru I
 	static int index = 0;
+#endif
 	
 	double x = (middle - 64) / 64.0;
 
 	double integral = 0.0;
-	/*
+#if 0
 	for (int i = 0; i < PAST_VALUES; i++) {
 		integral += xs[i];
 	}
 	xs[index] = x;
 	index = (index + 1) % PAST_VALUES;
-	*/
+#endif
 
 	double y = (x * KP_ + (x - x_old) * KD_ + integral / PAST_VALUES * KI_) * K_;
 
 	x_old = x;
 
+#if 0
 	static int frame = 0;
-	//bluetooth.printf("[ %d ] max_start = %d, max_end = %d, middle = %d, x = %lf, int = %lf, servo = %lf\n", frame++, max_start, max_end, middle, x, integral, y);
+	bluetooth.printf("[ %d ] max_start = %d, max_end = %d, middle = %d, x = %lf, int = %lf, servo = %lf\n", frame++, max_start, max_end, middle, x, integral, y);
+#endif
 
 	TFC_SetServo(0, y);
 }
@@ -373,9 +375,11 @@ void adjust_power() {
 
 
 int main() {
+#if 0
 	clock_t t_start, t_stop;
 	int i;
 	float seconds;
+#endif
 
 	bluetooth.baud(9600);  /* this is the good value - yay! */
 
@@ -394,8 +398,10 @@ int main() {
 	TFC_BAT_LED2_ON;
 	TFC_BAT_LED3_ON;
 
+#if 0
 	direction = 0;
 	t_start = clock();  /* marcam momentul de inceput */
+#endif
 
 	while(1) {
 		/* take data from camera 3 times in a row */
@@ -413,6 +419,7 @@ int main() {
 		
 		action();
 
+#if 0
 		t_stop = clock();  /* marcam momentul de sfarsit */
 		seconds = ((float)(t_stop - t_start)) / CLOCKS_PER_SEC;
 
@@ -438,5 +445,6 @@ int main() {
 
 		/* set power to the motor */
 		//TFC_SetMotorPWM(MOTOR_POWER, MOTOR_POWER);
+#endif
 	}
 }
