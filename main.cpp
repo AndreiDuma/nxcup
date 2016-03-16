@@ -322,8 +322,8 @@ void action() {
 
 #define K_		3.0
 
-#define	KP_		0.7
-#define KD_		0.3
+#define	KP_		0.9
+#define KD_		0.1
 #define KI_		0.0
 
 	static double x_old;  // pentru D
