@@ -15,8 +15,9 @@
 
 #define ENGINES_ON
 //#define	ENGINES_POWER_A		0.7
-#define	ENGINES_POWER_A		0.8
-#define	ENGINES_POWER_B		-3.5
+#define	ENGINES_POWER_A		0.9
+//#define	ENGINES_POWER_B		-3.5
+#define	ENGINES_POWER_B		-3.2
 
 float TIMP_EXPUNERE = 0.5;
 double pixels[3][128];
